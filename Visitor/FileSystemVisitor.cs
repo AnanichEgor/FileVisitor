@@ -104,7 +104,7 @@ namespace Visitor
             }
         }
 
-        public IEnumerable GetFiles()
+        public IEnumerable<string> GetFiles()
         {
             foreach (var file in _files)
             {
@@ -112,7 +112,7 @@ namespace Visitor
             }
         }
 
-        public IEnumerable GetDirectories()
+        public IEnumerable<string> GetDirectories()
         {
             foreach (var directory in _subDirsAll)
             {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace Visitor
@@ -9,10 +10,10 @@ namespace Visitor
     {
         // Data structure to hold names of subfolders to be
         // examined for files.
-        private List<System.IO.FileInfo> _files = new List<System.IO.FileInfo>();
-        private List<System.IO.DirectoryInfo> _subDirsAll = new List<System.IO.DirectoryInfo>();
+        private List<FileInfo> _files = new List<FileInfo>();
+        private List<DirectoryInfo> _subDirsAll = new List<DirectoryInfo>();
 
-        public TraverseTree(string root)
+        public FileSystemVisitor(string root)
         {
             TraverseTree(root);
         }
@@ -21,13 +22,13 @@ namespace Visitor
         {
             Stack<string> dirs = new Stack<string>();
 
-            if (!System.IO.Directory.Exists(root))
+            if (!Directory.Exists(root))
             {
                 throw new ArgumentException();
             }
             else
             {
-                _subDirsAll.Add(System.IO.DirectoryInfo(root));
+                _subDirsAll.Add(new DirectoryInfo(root));
                 dirs.Push(root);
             }
 
@@ -40,10 +41,10 @@ namespace Visitor
 
                 try
                 {
-                    subDirs = System.IO.Directory.GetDirectories(currentDir);
+                    subDirs = Directory.GetDirectories(currentDir);
                     foreach (string str in subDirs)
                     {
-                        _subDirsAll.Add(System.IO.DirectoryInfo(str));
+                        _subDirsAll.Add(new DirectoryInfo(str));
                         dirs.Push(str);
                     }
                 }
@@ -53,7 +54,7 @@ namespace Visitor
                     Console.WriteLine(e.Message);
                     continue;
                 }
-                catch (System.IO.DirectoryNotFoundException e)
+                catch (DirectoryNotFoundException e)
                 {
                     Console.WriteLine(e.Message);
                     continue;
@@ -63,7 +64,7 @@ namespace Visitor
 
                 try
                 {
-                    files = System.IO.Directory.GetFiles(currentDir);
+                    files = Directory.GetFiles(currentDir);
                 }
 
                 catch (UnauthorizedAccessException e)
@@ -72,7 +73,7 @@ namespace Visitor
                     continue;
                 }
 
-                catch (System.IO.DirectoryNotFoundException e)
+                catch (DirectoryNotFoundException e)
                 {
                     Console.WriteLine(e.Message);
                     continue;
@@ -82,16 +83,16 @@ namespace Visitor
             }
         }
 
-        private IEnumerable GetFiles(string[] files)
+        private IEnumerable<FileInfo> GetFiles(string[] files)
         {
             foreach (string file in files)
             {
-                System.IO.FileInfo fi;
+                FileInfo fi;
                 try
                 {
-                    fi = new System.IO.FileInfo(file);
+                    fi = new FileInfo(file);
                 }
-                catch (System.IO.FileNotFoundException e)
+                catch (FileNotFoundException e)
                 {
                     // If file was deleted by a separate application
                     //  or thread since the call to TraverseTree()

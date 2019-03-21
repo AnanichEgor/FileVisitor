@@ -9,12 +9,18 @@ namespace Visitor
     {
         // Data structure to hold names of subfolders to be
         // examined for files.
-        private Stack<string> dirs = new Stack<string>();
         private List<System.IO.FileInfo> _files = new List<System.IO.FileInfo>();
-        private List<System.IO.DirectoryInfo> _subDirsAll = new List<System.IO.DirectoryInfo>;
+        private List<System.IO.DirectoryInfo> _subDirsAll = new List<System.IO.DirectoryInfo>();
+
+        public TraverseTree(string root)
+        {
+            TraverseTree(root);
+        }
 
         private void TraverseTree(string root)
         {
+            Stack<string> dirs = new Stack<string>();
+
             if (!System.IO.Directory.Exists(root))
             {
                 throw new ArgumentException();
@@ -62,7 +68,6 @@ namespace Visitor
 
                 catch (UnauthorizedAccessException e)
                 {
-
                     Console.WriteLine(e.Message);
                     continue;
                 }
@@ -95,6 +100,22 @@ namespace Visitor
                 }
 
                 yield return fi;
+            }
+        }
+
+        public IEnumerable GetFiles()
+        {
+            foreach (var file in _files)
+            {
+                yield return $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
+            }
+        }
+
+        public IEnumerable GetDirectories()
+        {
+            foreach (var directory in _subDirsAll)
+            {
+                yield return $"{directory.Name}: {directory.CreationTime}";
             }
         }
     }

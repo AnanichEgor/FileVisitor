@@ -15,8 +15,6 @@ namespace Visitor
         internal delegate bool FilterAction(string itemName);
         internal delegate bool FilterRexAction(string itemName);
 
-        // Data structure to hold names of subfolders to be
-        // examined for files.
         public event ProcessState Start;
         public event ProcessState Finish;
         public event ProcessSearch FileFinded;
@@ -24,8 +22,11 @@ namespace Visitor
         public event ProcessFilter FilteredFileFinded;
         public event ProcessFilter FilteredDirectoryFinded;
 
+        // Data structure to hold names of subfolders to be
+        // examined for files.
         private List<FileInfo> _files = new List<FileInfo>();
         private List<DirectoryInfo> _subDirsAll = new List<DirectoryInfo>();
+
         private string _root;
         private Regex _maskRegex;
         private Func<string, bool> _filter;

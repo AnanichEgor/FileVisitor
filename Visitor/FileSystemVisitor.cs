@@ -3,15 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Visitor
 {
-    internal delegate void ProcessState(string message);
-    internal delegate void ProcessSearch(string message, bool isAlive = true);
-    internal delegate void ProcessFilter(string message, bool isAlive = true, string mask = "*.*");
-
     class FileSystemVisitor
     {
+        internal delegate void ProcessState(string message);
+        internal delegate bool ProcessSearch(string message, bool isAlive = true);
+        internal delegate bool ProcessFilter(string message, bool isAlive = true, string mask = "*.*");
+
         // Data structure to hold names of subfolders to be
         // examined for files.
         public event ProcessState Start;
@@ -23,10 +24,11 @@ namespace Visitor
 
         private List<FileInfo> _files = new List<FileInfo>();
         private List<DirectoryInfo> _subDirsAll = new List<DirectoryInfo>();
+        private string _root;
 
         public FileSystemVisitor(string root)
         {
-            TraverseTree(root);
+            _root = root;
         }
 
         private void TraverseTree(string root)
@@ -41,6 +43,7 @@ namespace Visitor
             {
                 _subDirsAll.Add(new DirectoryInfo(root));
                 dirs.Push(root);
+                DirectoryFinded?.Invoke(root);
             }
 
             dirs.Push(root);
@@ -57,6 +60,12 @@ namespace Visitor
                     {
                         _subDirsAll.Add(new DirectoryInfo(str));
                         dirs.Push(str);
+
+                        // if DirectoryFinded return "true" to exit seatch 
+                        if (DirectoryFinded != null && DirectoryFinded.Invoke(str, true))
+                        {
+                            return;
+                        }
                     }
                 }
 
@@ -102,6 +111,12 @@ namespace Visitor
                 try
                 {
                     fi = new FileInfo(file);
+
+                    // if FileFinded return "true" to exit seatch 
+                    if (FileFinded != null && FileFinded.Invoke(fi.Name, true))
+                    {
+                        break;
+                    }
                 }
                 catch (FileNotFoundException e)
                 {
@@ -115,11 +130,18 @@ namespace Visitor
             }
         }
 
+        private Regex FileMaskToRegex(string sFileMask)
+        {
+            String convertedMask = "^" + Regex.Escape(sFileMask).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+            return new Regex(convertedMask, RegexOptions.IgnoreCase);
+        }
+
         public IEnumerable<string> GetFiles()
         {
             foreach (var file in _files)
             {
-                yield return $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
+                var a = $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
+                yield return a;
             }
         }
 
@@ -129,6 +151,15 @@ namespace Visitor
             {
                 yield return $"{directory.Name}: {directory.CreationTime}";
             }
+        }
+
+        public void Execute()
+        {
+            Start?.Invoke("Start scan!");
+
+            TraverseTree(_root);
+
+            Finish?.Invoke("Finish scan!");
         }
     }
 }

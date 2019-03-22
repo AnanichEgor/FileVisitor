@@ -14,10 +14,10 @@ namespace Visitor
     {
         // Data structure to hold names of subfolders to be
         // examined for files.
-        public event ProcessState OnStart;
-        public event ProcessState OnFinihs;
-        public event ProcessSearch OnFileFinded;
-        public event ProcessSearch OnDirectoryFinded;
+        public event ProcessState Start;
+        public event ProcessState Finish;
+        public event ProcessSearch FileFinded;
+        public event ProcessSearch DirectoryFinded;
         public event ProcessFilter FilteredFileFinded;
         public event ProcessFilter FilteredDirectoryFinded;
 

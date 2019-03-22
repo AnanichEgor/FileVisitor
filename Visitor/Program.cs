@@ -6,7 +6,8 @@ namespace Visitor
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var a = new FileSystemVisitor("d:\\");
+            Console.ReadKey();
         }
     }
 }

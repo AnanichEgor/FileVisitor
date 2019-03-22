@@ -11,7 +11,8 @@ namespace Visitor
     {
         internal delegate void ProcessState(string message);
         internal delegate bool ProcessSearch(string message, bool isAlive = true);
-        internal delegate bool ProcessFilter(string message, bool isAlive = true, string mask = "*.*");
+        internal delegate bool ProcessFilter(bool isAlive = true);
+        internal delegate bool FilterAction(string fileName);
 
         // Data structure to hold names of subfolders to be
         // examined for files.
@@ -25,10 +26,16 @@ namespace Visitor
         private List<FileInfo> _files = new List<FileInfo>();
         private List<DirectoryInfo> _subDirsAll = new List<DirectoryInfo>();
         private string _root;
+        private Func<string, bool> _filter;
 
         public FileSystemVisitor(string root)
         {
             _root = root;
+        }
+
+        public FileSystemVisitor(string root, Func<string, bool> filterAction) : this(root)
+        {
+            _filter = filterAction;
         }
 
         private void TraverseTree(string root)
@@ -140,8 +147,11 @@ namespace Visitor
         {
             foreach (var file in _files)
             {
-                var a = $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
-                yield return a;
+                if (_filter != null && !_filter(file.Name))
+                {
+                    continue;
+                }
+                yield return $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
             }
         }
 
@@ -149,6 +159,10 @@ namespace Visitor
         {
             foreach (var directory in _subDirsAll)
             {
+                if (_filter != null && !_filter(directory.Name))
+                {
+                    continue;
+                }
                 yield return $"{directory.Name}: {directory.CreationTime}";
             }
         }

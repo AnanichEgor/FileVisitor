@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.489
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Visitor", "Visitor\Visitor.csproj", "{4FD4076D-1362-47FA-81AB-96B8A99CC49B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Visitor", "Visitor\Visitor.csproj", "{4FD4076D-1362-47FA-81AB-96B8A99CC49B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Visitor.Test", "Visitor.Test\Visitor.Test.csproj", "{4C71B587-C300-4DE7-83ED-7206E6461508}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{4FD4076D-1362-47FA-81AB-96B8A99CC49B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FD4076D-1362-47FA-81AB-96B8A99CC49B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FD4076D-1362-47FA-81AB-96B8A99CC49B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C71B587-C300-4DE7-83ED-7206E6461508}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C71B587-C300-4DE7-83ED-7206E6461508}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C71B587-C300-4DE7-83ED-7206E6461508}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C71B587-C300-4DE7-83ED-7206E6461508}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

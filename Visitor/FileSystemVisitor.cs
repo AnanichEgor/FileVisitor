@@ -10,9 +10,10 @@ namespace Visitor
     class FileSystemVisitor
     {
         internal delegate void ProcessState(string message);
-        internal delegate bool ProcessSearch(string message, bool isAlive = true);
-        internal delegate bool ProcessFilter(bool isAlive = true);
-        internal delegate bool FilterAction(string fileName);
+        internal delegate bool ProcessSearch(string message);
+        internal delegate bool ProcessFilter(string itemName);
+        internal delegate bool FilterAction(string itemName);
+        internal delegate bool FilterRexAction(string itemName);
 
         // Data structure to hold names of subfolders to be
         // examined for files.
@@ -26,7 +27,9 @@ namespace Visitor
         private List<FileInfo> _files = new List<FileInfo>();
         private List<DirectoryInfo> _subDirsAll = new List<DirectoryInfo>();
         private string _root;
+        private Regex _maskRegex;
         private Func<string, bool> _filter;
+        private Func<string, Regex, bool> _filterRegex;
 
         public FileSystemVisitor(string root)
         {
@@ -36,6 +39,12 @@ namespace Visitor
         public FileSystemVisitor(string root, Func<string, bool> filterAction) : this(root)
         {
             _filter = filterAction;
+        }
+
+        public FileSystemVisitor(string root, Func<string, Regex, bool> filterRegexAction, string mask) : this(root)
+        {
+            _filterRegex = filterRegexAction;
+            _maskRegex = FileMaskToRegex(mask);
         }
 
         private void TraverseTree(string root)
@@ -69,7 +78,7 @@ namespace Visitor
                         dirs.Push(str);
 
                         // if DirectoryFinded return "true" to exit seatch 
-                        if (DirectoryFinded != null && DirectoryFinded.Invoke(str, true))
+                        if (DirectoryFinded != null && DirectoryFinded.Invoke(str))
                         {
                             return;
                         }
@@ -120,7 +129,7 @@ namespace Visitor
                     fi = new FileInfo(file);
 
                     // if FileFinded return "true" to exit seatch 
-                    if (FileFinded != null && FileFinded.Invoke(fi.Name, true))
+                    if (FileFinded != null && FileFinded.Invoke(fi.Name))
                     {
                         break;
                     }
@@ -139,7 +148,7 @@ namespace Visitor
 
         private Regex FileMaskToRegex(string sFileMask)
         {
-            String convertedMask = "^" + Regex.Escape(sFileMask).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+            string convertedMask = "^" + Regex.Escape(sFileMask).Replace("\\*", ".*").Replace("\\?", ".") + "$";
             return new Regex(convertedMask, RegexOptions.IgnoreCase);
         }
 
@@ -151,6 +160,17 @@ namespace Visitor
                 {
                     continue;
                 }
+
+                if (_filterRegex != null && !_filterRegex(file.Name, _maskRegex))
+                {
+                    continue;
+                }
+
+                if (FilteredFileFinded != null && FilteredFileFinded.Invoke(file.Name))
+                {
+                    break;
+                }
+
                 yield return $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
             }
         }
@@ -163,6 +183,17 @@ namespace Visitor
                 {
                     continue;
                 }
+
+                if (_filterRegex != null && !_filterRegex(directory.Name, _maskRegex))
+                {
+                    continue;
+                }
+
+                if (FilteredDirectoryFinded != null && FilteredDirectoryFinded.Invoke(directory.Name))
+                {
+                    break;
+                }
+
                 yield return $"{directory.Name}: {directory.CreationTime}";
             }
         }

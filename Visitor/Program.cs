@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Visitor
@@ -7,24 +8,11 @@ namespace Visitor
     {
         static void Main(string[] args)
         {
-            var a = new FileSystemVisitor("d:\\");
-            a.Start += WriteToConsole;
-            a.Finish += WriteToConsole;
-            a.FileFinded += EventSearch;
-            a.DirectoryFinded += EventSearch;
-            a.FilteredFileFinded += EventFilter;
-            a.FilteredDirectoryFinded += EventFilter;
-            a.Execute();
-
             //var b = new FileSystemVisitor("d:\\", (fileName) => { return fileName .Length > 10; });
             //b.Execute();
 
             //var c = new FileSystemVisitor("d:\\", Fits, "a*.*");
             //c.Execute();
-
-            var resultA = a.GetFiles();
-            //var resultB = b.GetFiles();
-            //var resultC = c.GetFiles();
             Console.ReadKey();
         }
 

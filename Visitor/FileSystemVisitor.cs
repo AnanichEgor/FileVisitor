@@ -7,13 +7,13 @@ using System.Text.RegularExpressions;
 
 namespace Visitor
 {
-    class FileSystemVisitor
+    public class FileSystemVisitor
     {
-        internal delegate void ProcessState(string message);
-        internal delegate bool ProcessSearch(string message);
-        internal delegate bool ProcessFilter(string itemName);
-        internal delegate bool FilterAction(string itemName);
-        internal delegate bool FilterRexAction(string itemName);
+        public delegate void ProcessState(string message);
+        public delegate bool ProcessSearch(string message);
+        public delegate bool ProcessFilter(string itemName);
+        public delegate bool FilterAction(string itemName);
+        public delegate bool FilterRexAction(string itemName);
 
         public event ProcessState Start;
         public event ProcessState Finish;
@@ -25,61 +25,58 @@ namespace Visitor
         // Data structure to hold names of subfolders to be
         // examined for files.
         private List<FileInfo> _files = new List<FileInfo>();
-        private List<DirectoryInfo> _subDirsAll = new List<DirectoryInfo>();
+        private List<IDirectoryInfo> _subDirsAll = new List<IDirectoryInfo>();
 
-        private string _root;
+        private IDirectoryInfo _root;
         private Regex _maskRegex;
         private Func<string, bool> _filter;
         private Func<string, Regex, bool> _filterRegex;
 
-        public FileSystemVisitor(string root)
+        public FileSystemVisitor(IDirectoryInfo directory)
         {
-            _root = root;
+            _root = directory;
         }
 
-        public FileSystemVisitor(string root, Func<string, bool> filterAction) : this(root)
+        public FileSystemVisitor(IDirectoryInfo directory, Func<string, bool> filterAction) : this(directory)
         {
             _filter = filterAction;
         }
 
-        public FileSystemVisitor(string root, Func<string, Regex, bool> filterRegexAction, string mask) : this(root)
+        public FileSystemVisitor(IDirectoryInfo directory, Func<string, Regex, bool> filterRegexAction, string mask) : this(directory)
         {
             _filterRegex = filterRegexAction;
             _maskRegex = FileMaskToRegex(mask);
         }
 
-        private void TraverseTree(string root)
+        private void TraverseTree(IDirectoryInfo directory)
         {
-            Stack<string> dirs = new Stack<string>();
+            Stack<IDirectoryInfo> dirs = new Stack<IDirectoryInfo>();
 
-            if (!Directory.Exists(root))
+            if (!directory.Exists)
             {
                 throw new ArgumentException();
             }
             else
             {
-                _subDirsAll.Add(new DirectoryInfo(root));
-                dirs.Push(root);
-                DirectoryFinded?.Invoke(root);
+                _subDirsAll.Add(directory);
+                dirs.Push(directory);
+                DirectoryFinded?.Invoke(directory.FullName);
             }
-
-            dirs.Push(root);
 
             while (dirs.Count > 0)
             {
-                string currentDir = dirs.Pop();
-                string[] subDirs;
+                IDirectoryInfo currentDir = dirs.Pop();
+                IDirectoryInfo[] subDirs;
 
                 try
                 {
-                    subDirs = Directory.GetDirectories(currentDir);
-                    foreach (string str in subDirs)
+                    subDirs = currentDir.GetDirectories();
+                    foreach (IDirectoryInfo dir in subDirs)
                     {
-                        _subDirsAll.Add(new DirectoryInfo(str));
-                        dirs.Push(str);
+                        _subDirsAll.Add(dir);
+                        dirs.Push(dir);
 
-                        // if DirectoryFinded return "true" to exit seatch 
-                        if (DirectoryFinded != null && DirectoryFinded.Invoke(str))
+                        if (DirectoryFinded != null && DirectoryFinded.Invoke(dir.FullName))
                         {
                             return;
                         }
@@ -97,11 +94,11 @@ namespace Visitor
                     continue;
                 }
 
-                string[] files = null;
+                FileInfo[] files = null;
 
                 try
                 {
-                    files = Directory.GetFiles(currentDir);
+                    files = currentDir.GetFiles();
                 }
 
                 catch (UnauthorizedAccessException e)
@@ -116,34 +113,14 @@ namespace Visitor
                     continue;
                 }
 
-                _files.AddRange(GetFiles(files));
-            }
-        }
-
-        private IEnumerable<FileInfo> GetFiles(string[] files)
-        {
-            foreach (string file in files)
-            {
-                FileInfo fi;
-                try
+                foreach (FileInfo file in files)
                 {
-                    fi = new FileInfo(file);
-
-                    // if FileFinded return "true" to exit seatch 
-                    if (FileFinded != null && FileFinded.Invoke(fi.Name))
+                    _files.Add(file);
+                    if (FileFinded != null && FileFinded.Invoke(file.FullName))
                     {
-                        break;
+                        return;
                     }
                 }
-                catch (FileNotFoundException e)
-                {
-                    // If file was deleted by a separate application
-                    //  or thread since the call to TraverseTree()
-                    Console.WriteLine(e.Message);
-                    continue;
-                }
-
-                yield return fi;
             }
         }
 
@@ -153,49 +130,55 @@ namespace Visitor
             return new Regex(convertedMask, RegexOptions.IgnoreCase);
         }
 
-        public IEnumerable<string> GetFiles()
+        public IEnumerable<string> Files
         {
-            foreach (var file in _files)
+            get
             {
-                if (_filter != null && !_filter(file.Name))
+                foreach (var file in _files)
                 {
-                    continue;
-                }
+                    if (_filter != null && !_filter(file.Name))
+                    {
+                        continue;
+                    }
 
-                if (_filterRegex != null && !_filterRegex(file.Name, _maskRegex))
-                {
-                    continue;
-                }
+                    if (_filterRegex != null && !_filterRegex(file.Name, _maskRegex))
+                    {
+                        continue;
+                    }
 
-                if (FilteredFileFinded != null && FilteredFileFinded.Invoke(file.Name))
-                {
-                    break;
-                }
+                    if (FilteredFileFinded != null && FilteredFileFinded.Invoke(file.Name))
+                    {
+                        break;
+                    }
 
-                yield return $"{file.Name}: {file.Length} bytes, {file.CreationTime}";
+                    yield return $"{file.Name}: {file.CreationTime}";
+                }
             }
         }
 
-        public IEnumerable<string> GetDirectories()
+        public IEnumerable<string> Directories
         {
-            foreach (var directory in _subDirsAll)
+            get
             {
-                if (_filter != null && !_filter(directory.Name))
+                foreach (var directory in _subDirsAll)
                 {
-                    continue;
-                }
+                    if (_filter != null && !_filter(directory.FullName))
+                    {
+                        continue;
+                    }
 
-                if (_filterRegex != null && !_filterRegex(directory.Name, _maskRegex))
-                {
-                    continue;
-                }
+                    if (_filterRegex != null && !_filterRegex(directory.FullName, _maskRegex))
+                    {
+                        continue;
+                    }
 
-                if (FilteredDirectoryFinded != null && FilteredDirectoryFinded.Invoke(directory.Name))
-                {
-                    break;
-                }
+                    if (FilteredDirectoryFinded != null && FilteredDirectoryFinded.Invoke(directory.FullName))
+                    {
+                        break;
+                    }
 
-                yield return $"{directory.Name}: {directory.CreationTime}";
+                    yield return $"{directory.FullName}: {directory.CreationTime}";
+                }
             }
         }
 
